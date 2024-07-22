@@ -1,11 +1,14 @@
 import express from "express";
 import { newUserValidation } from "../middlewares/validationMiddlewares/userValidation.js";
 import { hashPassword } from "../utilityHELPER/bcryptHelper.js";
+import { v4 as uuidv4 } from "uuid";
 import { createUser } from "../model/userModel.js";
 import {
   buildErrorResponse,
   buildSuccessResponse,
 } from "../utilityHELPER/responseHelper.js";
+import { createSession } from "../model/sessionModel.js";
+import { sendVerificationLinkEmail } from "../utilityHELPER/nodemailerHelper.js";
 
 export const userRouter = express.Router();
 
@@ -14,8 +17,26 @@ userRouter.post("/", newUserValidation, async (req, res) => {
   try {
     const { password } = req.body;
     const hashedPassword = hashPassword(password);
-    console.log(hashedPassword);
     const user = await createUser({ ...req.body, password: hashedPassword });
+
+    if (user?._id) {
+      // if user is created send a verification email
+      const secureID = uuidv4();
+
+      //   store this secure ID in session storage for that user
+      const newUserSession = await createSession({
+        userEmail: user.email,
+        token: secureID,
+      });
+
+      if (newUserSession?._id) {
+        // create verification link and send verification email
+        const verificationUrl = `${process.env.CLIENT_ROOT_URL}/verify-email?e=${user.email}&id=${secureID}`;
+
+        // send the email
+        sendVerificationLinkEmail(user, verificationUrl);
+      }
+    }
 
     user?._id
       ? buildSuccessResponse(

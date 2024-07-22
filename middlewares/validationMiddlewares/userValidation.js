@@ -1,5 +1,5 @@
 import Joi from "joi";
-// import { buildErrorResponse } from "../../utilityHELPER/responseHelper.js";
+import { buildErrorResponse } from "../../utilityHELPER/responseHelper.js";
 
 export const newUserValidation = (req, res, next) => {
   try {
