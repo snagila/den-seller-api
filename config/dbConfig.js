@@ -8,7 +8,7 @@ export const connectToMongoDb = () => {
     );
     if (connect) {
       console.log(
-        `Database connected: ${process.env.DB_CONNECT_URL}/ecom-den-database`
+        `Database connected: ${process.env.DB_CONNECT_URL}/ecom-den-home-database`
       );
     }
   } catch (error) {
