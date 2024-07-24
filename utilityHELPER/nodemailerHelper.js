@@ -28,7 +28,6 @@ const sendEmail = async (emailFormat) => {
 
 export const sendVerificationLinkEmail = (user, verificationUrl) => {
   const { email, firstName, lastName } = user;
-  console.log(user);
 
   const emailFormat = {
     from: `Ecom Den<${process.env.SMTP_USER}>`,
@@ -53,5 +52,35 @@ export const sendVerificationLinkEmail = (user, verificationUrl) => {
     </table>
     `,
   };
+  sendEmail(emailFormat);
+};
+
+export const sendAccountVerifiedEmail = (user, loginUrl) => {
+  const { email, firstName, lastName } = user;
+
+  const emailFormat = {
+    from: `Eco Den<${process.env.SMTP_USER}>`,
+    to: email,
+    subject: "Account Verified",
+    html: `
+    <table style="width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; border-collapse: collapse;">
+        <tr>
+            <td style="text-align: center;">
+                <h1>Account Verified</h1>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p>Dear ${firstName + " " + lastName},</p>
+                <p>Your account has been successfully verified. You can now login to our application using the button below:</p>
+                <p><a href="${loginUrl}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none;">Login Now</a></p>
+                <p>If you did not verify your account, please ignore this email.</p>
+                <p>Thank you,<br> ECO DEN</p>
+            </td>
+        </tr>
+    </table>
+    `,
+  };
+
   sendEmail(emailFormat);
 };

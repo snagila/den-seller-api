@@ -2,13 +2,16 @@ import express from "express";
 import { newUserValidation } from "../middlewares/validationMiddlewares/userValidation.js";
 import { hashPassword } from "../utilityHELPER/bcryptHelper.js";
 import { v4 as uuidv4 } from "uuid";
-import { createUser } from "../model/userModel.js";
+import { createUser, updateUser } from "../model/userModel.js";
 import {
   buildErrorResponse,
   buildSuccessResponse,
 } from "../utilityHELPER/responseHelper.js";
-import { createSession } from "../model/sessionModel.js";
-import { sendVerificationLinkEmail } from "../utilityHELPER/nodemailerHelper.js";
+import { createSession, deleteSession } from "../model/sessionModel.js";
+import {
+  sendAccountVerifiedEmail,
+  sendVerificationLinkEmail,
+} from "../utilityHELPER/nodemailerHelper.js";
 
 export const userRouter = express.Router();
 
@@ -51,5 +54,40 @@ userRouter.post("/", newUserValidation, async (req, res) => {
     }
 
     buildErrorResponse(res, error.message);
+  }
+});
+
+// VERIFY USER
+userRouter.post("/verify-email", async (req, res) => {
+  try {
+    const { token, userEmail } = req.body;
+    if (userEmail && token) {
+      const result = await deleteSession({ token, userEmail });
+
+      if (result?._id) {
+        // update the user to isVerified True
+        const user = await updateUser(
+          { email: userEmail },
+          { isVerified: true }
+        );
+
+        if (user._id) {
+          // send account verified email and welcome email
+          sendAccountVerifiedEmail(user, process.env.CLIENT_ROOT_URL);
+          buildSuccessResponse(res, {}, "Your email is verified.");
+          return;
+        }
+      }
+      return;
+    }
+    buildErrorResponse(
+      res,
+      "Account can not be verified. Please contact admin. "
+    );
+  } catch (error) {
+    buildErrorResponse(
+      res,
+      "Account can not be verified. Please contact admin. "
+    );
   }
 });
