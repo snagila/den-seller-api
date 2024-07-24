@@ -10,13 +10,21 @@ import {
   buildErrorResponse,
   buildSuccessResponse,
 } from "../utilityHELPER/responseHelper.js";
-import { createSession, deleteSession } from "../model/sessionModel.js";
+import {
+  createSession,
+  deletePreviousSessionToken,
+  deleteSession,
+} from "../model/sessionModel.js";
 import {
   sendAccountVerifiedEmail,
   sendVerificationLinkEmail,
 } from "../utilityHELPER/nodemailerHelper.js";
 import { adminAuth } from "../middlewares/authMiddlewares/adminAuth.js";
-import { generateJWTs } from "../utilityHELPER/jwtHelper.js";
+import {
+  generateAccessJWT,
+  generateJWTs,
+  verifyRefreshJWT,
+} from "../utilityHELPER/jwtHelper.js";
 
 export const userRouter = express.Router();
 
@@ -130,6 +138,40 @@ userRouter.post("/login", async (req, res) => {
     if (isPassWordMatched) {
       const jwts = generateJWTs(user.email);
       return buildSuccessResponse(res, jwts, "Logged in Successfully.");
+    }
+  } catch (error) {
+    buildErrorResponse(res, error.message);
+  }
+});
+
+// GET THE USER
+userRouter.get("/", adminAuth, async (req, res) => {
+  try {
+    buildSuccessResponse(res, req.userInfo, "User Info");
+  } catch (error) {
+    buildErrorResponse(res, error.message);
+  }
+});
+
+// NEW ACCESS TOKEN WITH REFRESH TOKEN
+userRouter.post("/accessJWT", async (req, res) => {
+  try {
+    const { authorization } = req.headers;
+
+    const verifedRefreshJWT = verifyRefreshJWT(authorization);
+
+    if (verifedRefreshJWT?.email) {
+      const deletePreviousSession = await deletePreviousSessionToken({
+        userEmail: verifedRefreshJWT.email,
+      });
+
+      const accessJWT = generateAccessJWT(verifedRefreshJWT.email);
+      const newAccessToken = await createSession({
+        userEmail: verifedRefreshJWT.email,
+        token: accessJWT,
+      });
+
+      return buildSuccessResponse(res, accessJWT, "New Token");
     }
   } catch (error) {
     buildErrorResponse(res, error.message);

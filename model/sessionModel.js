@@ -7,3 +7,7 @@ export const createSession = (sessionObj) => {
 export const deleteSession = (filter) => {
   return sessionSchema.findOneAndDelete(filter);
 };
+
+export const deletePreviousSessionToken = (filter) => {
+  return sessionSchema.deleteMany(filter);
+};

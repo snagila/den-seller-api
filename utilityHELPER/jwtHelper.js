@@ -13,6 +13,7 @@ export const generateAccessJWT = (email) => {
     expiresIn: "15m",
   });
   createSession({ token, userEmail: email });
+  console.log(token);
   return token;
 };
 
@@ -31,4 +32,14 @@ export const generateJWTs = (email) => {
     accessJWT: generateAccessJWT(email),
     refreshJWT: generateRefreshJWT(email),
   };
+};
+
+// verify accessJWT
+export const verifyAccessJWT = (accessJWT) => {
+  return jwt.verify(accessJWT, process.env.JWT_ACCESS_SECRET);
+};
+
+// verify refreshJWT
+export const verifyRefreshJWT = (refreshJWT) => {
+  return jwt.verify(refreshJWT, process.env.JWT_REFRESH_SECRET);
 };
