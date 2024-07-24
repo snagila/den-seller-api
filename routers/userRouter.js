@@ -1,8 +1,11 @@
 import express from "express";
 import { newUserValidation } from "../middlewares/validationMiddlewares/userValidation.js";
-import { hashPassword } from "../utilityHELPER/bcryptHelper.js";
+import {
+  comparePassword,
+  hashPassword,
+} from "../utilityHELPER/bcryptHelper.js";
 import { v4 as uuidv4 } from "uuid";
-import { createUser, updateUser } from "../model/userModel.js";
+import { createUser, findUserByEmail, updateUser } from "../model/userModel.js";
 import {
   buildErrorResponse,
   buildSuccessResponse,
@@ -12,6 +15,8 @@ import {
   sendAccountVerifiedEmail,
   sendVerificationLinkEmail,
 } from "../utilityHELPER/nodemailerHelper.js";
+import { adminAuth } from "../middlewares/authMiddlewares/adminAuth.js";
+import { generateJWTs } from "../utilityHELPER/jwtHelper.js";
 
 export const userRouter = express.Router();
 
@@ -89,5 +94,44 @@ userRouter.post("/verify-email", async (req, res) => {
       res,
       "Account can not be verified. Please contact admin. "
     );
+  }
+});
+
+// Login user
+
+userRouter.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // FIND USER BY EMAIL
+
+    const user = await findUserByEmail(email);
+
+    if (!user?._id) {
+      return buildErrorResponse(res, "User Account does not exists.");
+    }
+
+    if (!user?.isVerified) {
+      return buildErrorResponse(
+        res,
+        "User is not verified. Please check your email for verification."
+      );
+    }
+
+    if (user?.role !== "admin") {
+      return buildErrorResponse(
+        res,
+        "You are not authorised to access this app."
+      );
+    }
+
+    const isPassWordMatched = comparePassword(password, user.password);
+
+    if (isPassWordMatched) {
+      const jwts = generateJWTs(user.email);
+      return buildSuccessResponse(res, jwts, "Logged in Successfully.");
+    }
+  } catch (error) {
+    buildErrorResponse(res, error.message);
   }
 });

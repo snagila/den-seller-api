@@ -11,3 +11,8 @@ export const createUser = (userObj) => {
 export const updateUser = (findBy, updatePart) => {
   return userSchema.findOneAndUpdate(findBy, updatePart, { new: true });
 };
+
+// find an user using email
+export const findUserByEmail = (email) => {
+  return userSchema.findOne({ email });
+};
