@@ -84,3 +84,33 @@ export const sendAccountVerifiedEmail = (user, loginUrl) => {
 
   sendEmail(emailFormat);
 };
+
+export const sendResetPassword = (user, resetUrl) => {
+  const { email, firstName, lastName } = user;
+
+  const emailFormat = {
+    from: `Eco Den<${process.env.SMTP_USER}>`,
+    to: email,
+    subject: "Password Reset",
+    html: `
+    <table style="width: 100%; max-width: 600px; margin: 0 auto; padding: 20px; border-collapse: collapse;">
+        <tr>
+            <td style="text-align: center;">
+                <h1>Account Verified</h1>
+            </td>
+        </tr>
+        <tr>
+            <td>
+                <p>Dear ${firstName + " " + lastName},</p>
+                <p>Please click the below link to reset your password. </p>
+                <p><a href="${resetUrl}" target="_blank" style="display: inline-block; padding: 10px 20px; background-color: #007bff; color: #fff; text-decoration: none;">Login Now</a></p>
+                <p>If you did not verify your account, please ignore this email.</p>
+                <p>Thank you,<br> ECO DEN</p>
+            </td>
+        </tr>
+    </table>
+    `,
+  };
+
+  sendEmail(emailFormat);
+};

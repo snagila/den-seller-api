@@ -17,6 +17,7 @@ import {
 } from "../model/sessionModel.js";
 import {
   sendAccountVerifiedEmail,
+  sendResetPassword,
   sendVerificationLinkEmail,
 } from "../utilityHELPER/nodemailerHelper.js";
 import { adminAuth } from "../middlewares/authMiddlewares/adminAuth.js";
@@ -172,6 +173,45 @@ userRouter.post("/accessJWT", async (req, res) => {
       });
 
       return buildSuccessResponse(res, accessJWT, "New Token");
+    }
+  } catch (error) {
+    buildErrorResponse(res, error.message);
+  }
+});
+
+userRouter.post("/reset-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // find if the user exists
+    const user = await findUserByEmail(email);
+    console.log(user);
+    if (!user?._id) {
+      return buildErrorResponse(res, "User does not exists. Please signup.");
+    }
+
+    if (user?._id) {
+      // if user is created send a verification email
+      const secureID = uuidv4();
+
+      //   store this secure ID in session storage for that user
+      const newUserSession = await createSession({
+        userEmail: user.email,
+        token: secureID,
+      });
+
+      if (newUserSession?._id) {
+        // create verification link and send verification email
+        const verificationUrl = `${process.env.CLIENT_ROOT_URL}/reset-password/newpassword?e=${user.email}&id=${secureID}`;
+
+        // send the email
+        sendResetPassword(user, verificationUrl);
+      }
+      return buildSuccessResponse(
+        res,
+        user.email,
+        " Please check your email for password reset link."
+      );
     }
   } catch (error) {
     buildErrorResponse(res, error.message);
