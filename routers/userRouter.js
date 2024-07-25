@@ -135,6 +135,9 @@ userRouter.post("/login", async (req, res) => {
     }
 
     const isPassWordMatched = comparePassword(password, user.password);
+    if (!isPassWordMatched) {
+      return buildErrorResponse(res, "Invalid Credentials");
+    }
 
     if (isPassWordMatched) {
       const jwts = generateJWTs(user.email);
@@ -179,13 +182,14 @@ userRouter.post("/accessJWT", async (req, res) => {
   }
 });
 
+// RESET EMAIL SENDING PART
 userRouter.post("/reset-password", async (req, res) => {
   try {
     const { email } = req.body;
 
     // find if the user exists
     const user = await findUserByEmail(email);
-    console.log(user);
+
     if (!user?._id) {
       return buildErrorResponse(res, "User does not exists. Please signup.");
     }
@@ -215,5 +219,34 @@ userRouter.post("/reset-password", async (req, res) => {
     }
   } catch (error) {
     buildErrorResponse(res, error.message);
+  }
+});
+
+// UPDATE PASSWORD FROM EMAIL LINK
+userRouter.post("/newpassword-reset", async (req, res) => {
+  try {
+    const { formData, token, userEmail } = req.body;
+
+    // check if the user exists
+    const user = await findUserByEmail(userEmail);
+
+    // check if the token exists
+    const dbToken = await deleteSession({ userEmail, token });
+
+    if (user && dbToken) {
+      const { password } = formData;
+      const hashedPassword = hashPassword(password);
+      const updatePassword = await updateUser(
+        { email: userEmail },
+        { password: hashedPassword }
+      );
+      buildSuccessResponse(
+        res,
+        userEmail,
+        "Password Reset done. Click here to  login"
+      );
+    }
+  } catch (error) {
+    buildErrorResponse(res, "Can not reset password. Please try again");
   }
 });
