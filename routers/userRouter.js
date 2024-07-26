@@ -250,3 +250,21 @@ userRouter.post("/newpassword-reset", async (req, res) => {
     buildErrorResponse(res, "Can not reset password. Please try again");
   }
 });
+
+// LOGOUT USER
+userRouter.post("/logout", async (req, res) => {
+  const { email } = req.body;
+  const deleteSessionTokens = await deletePreviousSessionToken({
+    userEmail: email,
+  });
+  const deleteRefreshToken = await updateUser({ email }, { refreshJWT: "" });
+  if (deleteRefreshToken && deleteSessionTokens) {
+    return buildSuccessResponse(
+      res,
+      deleteRefreshToken.email,
+      "Successfully Logged Out"
+    );
+  }
+
+  buildErrorResponse(res, "Can not logout. please try again");
+});

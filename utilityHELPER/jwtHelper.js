@@ -13,7 +13,7 @@ export const generateAccessJWT = (email) => {
     expiresIn: "15m",
   });
   createSession({ token, userEmail: email });
-  console.log(token);
+
   return token;
 };
 
